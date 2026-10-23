@@ -2,26 +2,480 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="FINDER FOR BKS4LESS">
+  <meta name="description" content="FINDER FOR BKS4LESS">
   <title>FINDER FOR BKS4LESS</title>
-  <meta http-equiv="refresh" content="0;url=https://hxcbcreqkfwntzyxeuuq.supabase.co/functions/v1/finder-station">
-  <link rel="canonical" href="https://hxcbcreqkfwntzyxeuuq.supabase.co/functions/v1/finder-station">
-  <script>
-    location.replace("https://hxcbcreqkfwntzyxeuuq.supabase.co/functions/v1/finder-station");
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
   <style>
-    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #eef0f3; color: #1f2530; font-family: "Segoe UI", Helvetica, Arial, sans-serif; }
-    main { background: #fff; border: 1.5px solid #1e3a5c; border-radius: 12px; padding: 28px 24px; width: min(420px, calc(100% - 32px)); text-align: center; }
-    h1 { margin: 0 0 12px; font-size: 20px; color: #1e3a5c; }
-    p { margin: 0 0 16px; color: #5a6575; }
-    a { color: #1e3a5c; font-weight: 700; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #eef0f3; font-family: "Segoe UI", Helvetica, Arial, sans-serif; color: #1f2530; }
+    body { min-height: 100dvh; display: flex; flex-direction: column; }
+    .station { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
+    .hdr { background: #1e3a5c; color: #fff; min-height: 56px; display: flex; align-items: center; padding: 10px 18px; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .hdr .brand { font-weight: 800; font-size: clamp(14px, 3.2vw, 20px); letter-spacing: .02em; line-height: 1.2; }
+    .hdr .meta { font-size: 13px; color: #d5deea; margin-left: 12px; }
+    .hdr .left { display: flex; align-items: baseline; flex-wrap: wrap; }
+    .hdr .wait { font-size: 14px; font-weight: 700; background: #2a4a6e; padding: 6px 12px; border-radius: 6px; white-space: nowrap; }
+    .body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; width: min(640px, 100%); padding: 28px 28px 24px; border: 1.5px solid #1e3a5c; box-shadow: 0 2px 8px rgba(30,58,92,.08); }
+    .card.ready { text-align: center; padding: 40px 24px 32px; }
+    .icon { font-size: 48px; line-height: 1; margin-bottom: 12px; letter-spacing: -2px; color: #1e3a5c; font-weight: 800; }
+    .title { font-size: clamp(26px, 5vw, 34px); font-weight: 800; color: #1e3a5c; margin-bottom: 8px; }
+    .sub { font-size: 18px; color: #5a6575; margin-bottom: 18px; }
+    .hint { font-size: 13px; color: #8a93a1; margin-top: 12px; }
+    .badge { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .04em; padding: 4px 10px; border-radius: 4px; color: #fff; background: #2f6b4a; margin-bottom: 12px; }
+    .badge.bad { background: #9a3a3a; }
+    .barcode-wrap { text-align: center; padding: 10px 8px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; margin: 8px 0 6px; }
+    .barcode-wrap svg { max-width: 100%; height: auto; }
+    .orderno { text-align: center; font-size: clamp(20px, 4vw, 26px); font-weight: 800; letter-spacing: .02em; margin-bottom: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+    .ship-to { text-align: center; font-size: clamp(16px, 3.2vw, 20px); font-weight: 700; color: #1f2530; margin-bottom: 10px; }
+    .ship-to b { color: #5a6575; font-weight: 600; margin-right: 6px; }
+    .scan-hint { text-align: center; font-size: 14px; font-weight: 700; color: #b8791a; background: #fcf1dc; border: 1px solid #e2c48a; border-radius: 6px; padding: 8px 10px; margin-bottom: 14px; }
+    .fields { font-size: 15px; line-height: 1.7; margin-bottom: 16px; text-align: left; }
+    .fields b { display: inline-block; min-width: 88px; color: #5a6575; font-weight: 600; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { flex: 1; min-width: 120px; text-align: center; padding: 14px 12px; border-radius: 8px; font-weight: 700; font-size: 15px; border: 1.5px solid #1e3a5c; background: #fff; color: #1e3a5c; cursor: pointer; }
+    .btn:disabled { opacity: .55; cursor: wait; }
+    .btn.primary { background: #1e3a5c; color: #fff; }
+    .btn.danger { border-color: #9a3a3a; color: #9a3a3a; }
+    .card.err { border-color: #9a3a3a; text-align: center; }
+    .err-title { font-size: clamp(24px, 5vw, 32px); font-weight: 800; color: #9a3a3a; margin: 8px 0 12px; }
+    .isbn-line { font-size: 16px; font-weight: 700; margin-bottom: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .err-body { font-size: 15px; color: #5a6575; margin-bottom: 20px; line-height: 1.45; }
+    label.isbn-label { display: block; font-size: 12px; font-weight: 700; color: #5a6575; margin-bottom: 6px; text-align: left; }
+    #isbn-input {
+      width: 100%; font-size: 22px; padding: 14px 14px; border: 2px solid #1e3a5c; border-radius: 10px;
+      font-family: ui-monospace, Menlo, Consolas, monospace; text-align: center; letter-spacing: .04em;
+    }
+    #isbn-input:focus { outline: 3px solid #fcf1dc; border-color: #b8791a; }
+    .status-msg { min-height: 1.2em; font-size: 13px; color: #9a3a3a; margin-top: 10px; }
+    .hidden { display: none !important; }
+    .problem-box { margin-top: 12px; text-align: left; }
+    .problem-box input { width: 100%; padding: 10px 12px; border: 1.5px solid #9a3a3a; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+
+    .btn.camera { margin-top: 14px; width: 100%; flex: none; }
+    #screen-camera { text-align: center; padding: 20px 20px 18px; }
+    #screen-camera .title { font-size: clamp(22px, 4.5vw, 28px); margin-bottom: 10px; }
+    #cam-video { width: 100%; max-height: 55vh; border-radius: 10px; background: #111; object-fit: cover; }
+    #cam-reader { width: 100%; min-height: 240px; border-radius: 10px; overflow: hidden; }
+    #cam-reader video { border-radius: 10px !important; }
+    .cam-status { font-size: 14px; color: #5a6575; margin: 10px 0 12px; min-height: 1.2em; }
   </style>
+<script>window.FINDER_CONFIG = { apiBase: 'https://hxcbcreqkfwntzyxeuuq.supabase.co/functions/v1', stationSecret: 'a578579de1431aae7e74e359a77c492738655a5ab42bed4a' };</script>
 </head>
 <body>
-  <main>
-    <h1>FINDER FOR BKS4LESS</h1>
-    <p>Opening the pack station…</p>
-    <p><a href="https://hxcbcreqkfwntzyxeuuq.supabase.co/functions/v1/finder-station">Continue to FINDER FOR BKS4LESS</a></p>
-  </main>
+  <div class="station">
+    <div class="hdr">
+      <div class="left">
+        <span class="brand">FINDER FOR BKS4LESS</span>
+      </div>
+      <div class="wait" id="waiting-count">Waiting: …</div>
+    </div>
+
+    <div class="body">
+      <!-- READY -->
+      <div class="card ready" id="screen-ready">
+        <div class="icon">|||</div>
+        <div class="title">Ready to scan</div>
+        <div class="sub">Scan the book ISBN</div>
+        <label class="isbn-label" for="isbn-input">ISBN</label>
+        <input id="isbn-input" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scan or type ISBN · Enter" autofocus>
+        <div class="status-msg" id="ready-msg"></div>
+        <button type="button" class="btn camera" id="btn-camera">Scan with camera</button>
+        <div class="hint">Waiting list updates from Shopify every 5 min · USB gun or camera · v1.1</div>
+      </div>
+
+      <!-- CAMERA -->
+      <div class="card hidden" id="screen-camera">
+        <div class="title">Point at ISBN barcode</div>
+        <video id="cam-video" class="hidden" playsinline muted autoplay></video>
+        <div id="cam-reader" class="hidden"></div>
+        <div class="cam-status" id="cam-status">Starting camera…</div>
+        <div class="actions">
+          <button type="button" class="btn" id="btn-cam-cancel">Cancel</button>
+        </div>
+      </div>
+
+      <!-- FOUND -->
+      <div class="card hidden" id="screen-found">
+        <div class="badge">ORDER FOUND</div>
+        <div class="barcode-wrap"><svg id="order-barcode"></svg></div>
+        <div class="orderno" id="order-name"></div>
+        <div class="ship-to" id="ship-to-line"><b>Ship to</b> <span id="customer-name">—</span></div>
+        <div class="scan-hint">Scan this barcode with the Shipwise scanner</div>
+        <div class="fields">
+          <div><b>Book</b> <span id="book-title"></span></div>
+          <div><b>ISBN</b> <span id="book-isbn"></span></div>
+          <div><b>Channel</b> <span id="book-channel"></span></div>
+          <div><b>Rule</b> Singles only · qty 1 · oldest first</div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="btn-back-found">Back</button>
+          <button type="button" class="btn danger" id="btn-problem">Problem</button>
+          <button type="button" class="btn primary" id="btn-done">Done · next book</button>
+        </div>
+        <div class="problem-box hidden" id="problem-box">
+          <input id="problem-note" type="text" maxlength="200" placeholder="Optional short note (damaged, wrong book…)" autocomplete="off">
+          <div class="actions">
+            <button type="button" class="btn" id="btn-problem-cancel">Cancel</button>
+            <button type="button" class="btn danger" id="btn-problem-confirm">Mark problem</button>
+          </div>
+        </div>
+        <div class="status-msg" id="found-msg"></div>
+      </div>
+
+      <!-- NO ORDER -->
+      <div class="card err hidden" id="screen-no">
+        <div class="badge bad">NO MATCH</div>
+        <div class="err-title">No order — put back</div>
+        <div class="isbn-line" id="no-isbn"></div>
+        <div class="err-body">No waiting single-book order for this ISBN in Shopify.<br>Put the book back on the pick stack.</div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="btn-scan-another">Back · scan another</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CFG = window.FINDER_CONFIG || {};
+    const API = (CFG.apiBase || '').replace(/\/$/, '');
+    const SECRET = CFG.stationSecret || '';
+
+    let current = null; // matched order row
+    let busy = false;
+
+    function normalizeIsbn(raw) {
+      const s = String(raw || '').trim().toUpperCase();
+      // keep digits and trailing X for ISBN-10
+      const cleaned = s.replace(/[^0-9X]/g, '');
+      if (/^\d{9}[\dX]$/.test(cleaned) || /^\d{13}$/.test(cleaned) || /^\d{10,14}$/.test(cleaned)) return cleaned;
+      return cleaned.replace(/X/g, '') ? cleaned : '';
+    }
+
+    function show(which) {
+      ['ready', 'found', 'no', 'camera'].forEach((k) => {
+        document.getElementById('screen-' + k).classList.toggle('hidden', k !== which);
+      });
+      if (which !== 'camera') {
+        stopCamera();
+      }
+      if (which === 'ready') {
+        const inp = document.getElementById('isbn-input');
+        inp.value = '';
+        document.getElementById('ready-msg').textContent = '';
+        document.getElementById('problem-box').classList.add('hidden');
+        setTimeout(() => inp.focus(), 50);
+      }
+    }
+
+    function setWaitingCount(n) {
+      const el = document.getElementById('waiting-count');
+      el.textContent = (typeof n === 'number') ? ('Waiting: ' + n.toLocaleString()) : 'Waiting: —';
+    }
+
+    async function api(path, body) {
+      const res = await fetch(API + path, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-finder-station-secret': SECRET,
+        },
+        body: JSON.stringify(body || {}),
+      });
+      let data = null;
+      try { data = await res.json(); } catch (_) { data = {}; }
+      if (!res.ok) {
+        const msg = (data && data.error) ? data.error : ('HTTP ' + res.status);
+        throw new Error(msg);
+      }
+      return data;
+    }
+
+    async function refreshCount() {
+      try {
+        const data = await api('/finder-match', { action: 'status' });
+        if (typeof data.waiting_count === 'number') setWaitingCount(data.waiting_count);
+      } catch (_) { /* ignore */ }
+    }
+
+    function drawBarcode(orderName) {
+      const svg = document.getElementById('order-barcode');
+      svg.innerHTML = '';
+      JsBarcode(svg, orderName, {
+        format: 'CODE128',
+        displayValue: false,
+        width: 2,
+        height: 110,
+        margin: 8,
+        background: '#ffffff',
+        lineColor: '#000000',
+      });
+    }
+
+    function goBackReady() {
+      current = null;
+      document.getElementById('problem-box').classList.add('hidden');
+      document.getElementById('found-msg').textContent = '';
+      show('ready');
+    }
+
+    function renderFound(row) {
+      current = row;
+      document.getElementById('order-name').textContent = row.order_name;
+      document.getElementById('customer-name').textContent = row.customer_name || '—';
+      document.getElementById('book-title').textContent = row.title || '—';
+      document.getElementById('book-isbn').textContent = row.isbn || '—';
+      document.getElementById('book-channel').textContent = row.channel || '—';
+      document.getElementById('found-msg').textContent = '';
+      document.getElementById('problem-box').classList.add('hidden');
+      drawBarcode(row.order_name);
+      show('found');
+      if (typeof row.waiting_count === 'number') setWaitingCount(row.waiting_count);
+    }
+
+    async function onScanSubmit() {
+      if (busy) return;
+      const raw = document.getElementById('isbn-input').value;
+      const isbn = normalizeIsbn(raw);
+      const msg = document.getElementById('ready-msg');
+      if (!isbn || isbn.length < 10) {
+        msg.textContent = 'Scan a full ISBN (10 or 13 digits).';
+        document.getElementById('isbn-input').select();
+        return;
+      }
+      busy = true;
+      msg.textContent = 'Looking up…';
+      try {
+        const data = await api('/finder-match', { isbn });
+        if (data.found && data.order) {
+          renderFound(data.order);
+        } else {
+          document.getElementById('no-isbn').textContent = 'Scanned ISBN ' + isbn;
+          if (typeof data.waiting_count === 'number') setWaitingCount(data.waiting_count);
+          show('no');
+        }
+      } catch (e) {
+        msg.textContent = 'Error: ' + (e.message || e);
+      } finally {
+        busy = false;
+      }
+    }
+
+    async function markStatus(status, note) {
+      if (!current || busy) return;
+      busy = true;
+      const msg = document.getElementById('found-msg');
+      msg.textContent = status === 'done' ? 'Saving…' : 'Logging problem…';
+      document.getElementById('btn-done').disabled = true;
+      document.getElementById('btn-problem').disabled = true;
+      try {
+        const data = await api('/finder-done', {
+          id: current.id,
+          status: status,
+          problem_note: note || null,
+        });
+        if (typeof data.waiting_count === 'number') setWaitingCount(data.waiting_count);
+        current = null;
+        show('ready');
+      } catch (e) {
+        msg.textContent = 'Error: ' + (e.message || e);
+      } finally {
+        busy = false;
+        document.getElementById('btn-done').disabled = false;
+        document.getElementById('btn-problem').disabled = false;
+      }
+    }
+
+
+    // --- Camera ISBN scan (BarcodeDetector → Html5Qrcode fallback) ---
+    let camStream = null;
+    let camDetector = null;
+    let camRaf = null;
+    let html5Qr = null;
+    let camBusy = false;
+
+    async function stopCamera() {
+      if (camRaf) { cancelAnimationFrame(camRaf); camRaf = null; }
+      camDetector = null;
+      if (html5Qr) {
+        const q = html5Qr;
+        html5Qr = null;
+        try { await q.stop(); } catch (_) {}
+        try { await q.clear(); } catch (_) {}
+      }
+      if (camStream) {
+        try { camStream.getTracks().forEach((t) => t.stop()); } catch (_) {}
+        camStream = null;
+      }
+      const video = document.getElementById('cam-video');
+      if (video) {
+        try { video.srcObject = null; } catch (_) {}
+        video.classList.add('hidden');
+      }
+      const reader = document.getElementById('cam-reader');
+      if (reader) {
+        reader.classList.add('hidden');
+        reader.innerHTML = '';
+      }
+    }
+
+    function loadHtml5Qrcode() {
+      return new Promise((resolve, reject) => {
+        if (window.Html5Qrcode) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Could not load barcode scanner library'));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function onCameraDecoded(raw) {
+      if (camBusy) return;
+      camBusy = true;
+      const status = document.getElementById('cam-status');
+      status.textContent = 'Got it — looking up…';
+      await stopCamera();
+      document.getElementById('isbn-input').value = String(raw || '');
+      // Leave camera screen; onScanSubmit → show(found|no) or stay ready with error
+      document.getElementById('screen-camera').classList.add('hidden');
+      document.getElementById('screen-ready').classList.remove('hidden');
+      try {
+        await onScanSubmit();
+        // If still on ready (validation/API error), keep isbn for retry
+      } finally {
+        camBusy = false;
+      }
+    }
+
+    async function startBarcodeDetector() {
+      const formats = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
+      camDetector = new BarcodeDetector({ formats: formats });
+      camStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      const video = document.getElementById('cam-video');
+      video.classList.remove('hidden');
+      document.getElementById('cam-reader').classList.add('hidden');
+      video.srcObject = camStream;
+      await video.play();
+      document.getElementById('cam-status').textContent = 'Aim at the book barcode';
+      const tick = async () => {
+        if (!camDetector || !camStream) return;
+        try {
+          if (video.readyState >= 2) {
+            const codes = await camDetector.detect(video);
+            if (codes && codes.length && codes[0].rawValue) {
+              await onCameraDecoded(codes[0].rawValue);
+              return;
+            }
+          }
+        } catch (_) { /* keep scanning */ }
+        camRaf = requestAnimationFrame(tick);
+      };
+      camRaf = requestAnimationFrame(tick);
+    }
+
+    async function startHtml5Qrcode() {
+      await loadHtml5Qrcode();
+      document.getElementById('cam-video').classList.add('hidden');
+      const reader = document.getElementById('cam-reader');
+      reader.classList.remove('hidden');
+      reader.innerHTML = '';
+      const formats = [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+      ];
+      html5Qr = new Html5Qrcode('cam-reader', { formatsToSupport: formats, verbose: false });
+      document.getElementById('cam-status').textContent = 'Aim at the book barcode';
+      await html5Qr.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 280, height: 140 }, aspectRatio: 1.777 },
+        async (decoded) => { await onCameraDecoded(decoded); },
+        () => {}
+      );
+    }
+
+    async function openCameraScan() {
+      const readyMsg = document.getElementById('ready-msg');
+      readyMsg.textContent = '';
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        readyMsg.textContent = 'Camera not available in this browser. Use the ISBN field or a USB scanner.';
+        return;
+      }
+      show('camera');
+      const status = document.getElementById('cam-status');
+      status.textContent = 'Starting camera…';
+      try {
+        if ('BarcodeDetector' in window) {
+          try {
+            await startBarcodeDetector();
+            return;
+          } catch (e) {
+            await stopCamera();
+            if (e && (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError')) {
+              show('ready');
+              readyMsg.textContent = 'Camera permission denied. Allow camera for this site, or type/scan ISBN.';
+              return;
+            }
+            // fall through to Html5Qrcode
+            status.textContent = 'Trying alternate scanner…';
+          }
+        }
+        await startHtml5Qrcode();
+      } catch (e) {
+        await stopCamera();
+        show('ready');
+        const name = e && e.name;
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+          readyMsg.textContent = 'Camera permission denied. Allow camera for this site, or type/scan ISBN.';
+        } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+          readyMsg.textContent = 'No camera found on this device. Use the ISBN field or a USB scanner.';
+        } else {
+          readyMsg.textContent = 'Camera unavailable: ' + ((e && e.message) || e || 'unknown error');
+        }
+      }
+    }
+
+
+    document.getElementById('isbn-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        onScanSubmit();
+      }
+    });
+    document.getElementById('btn-done').addEventListener('click', () => markStatus('done'));
+    document.getElementById('btn-problem').addEventListener('click', () => {
+      document.getElementById('problem-box').classList.remove('hidden');
+      document.getElementById('problem-note').focus();
+    });
+    document.getElementById('btn-problem-cancel').addEventListener('click', () => {
+      document.getElementById('problem-box').classList.add('hidden');
+    });
+    document.getElementById('btn-problem-confirm').addEventListener('click', () => {
+      const note = document.getElementById('problem-note').value.trim();
+      markStatus('problem', note || null);
+    });
+    document.getElementById('btn-back-found').addEventListener('click', goBackReady);
+    document.getElementById('btn-scan-another').addEventListener('click', goBackReady);
+    document.getElementById('btn-camera').addEventListener('click', openCameraScan);
+    document.getElementById('btn-cam-cancel').addEventListener('click', () => show('ready'));
+
+    // boot
+    if (!API || !SECRET) {
+      document.getElementById('ready-msg').textContent = 'Station config missing. Open via the FINDER station URL.';
+    } else {
+      refreshCount();
+      setInterval(refreshCount, 60_000);
+    }
+    show('ready');
+  </script>
 </body>
 </html>
