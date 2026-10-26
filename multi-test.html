@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>FINDER FOR BKS4LESS · Multi (test)</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script>window.FINDER_CONFIG = { apiBase: 'https://hxcbcreqkfwntzyxeuuq.supabase.co/functions/v1', stationSecret: 'a578579de1431aae7e74e359a77c492738655a5ab42bed4a' };</script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; background: #eef0f3; font-family: "Segoe UI", Helvetica, Arial, sans-serif; color: #1f2530; }
+    body { min-height: 100dvh; display: flex; flex-direction: column; }
+    .station { flex: 1; display: flex; flex-direction: column; min-height: 100dvh; }
+    .hdr { background: #1e3a5c; color: #fff; min-height: 56px; display: flex; align-items: center; padding: 10px 18px; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .hdr .brand { font-weight: 800; font-size: clamp(14px, 3.2vw, 20px); letter-spacing: .02em; line-height: 1.2; }
+    .hdr .meta { font-size: 13px; color: #d5deea; margin-left: 12px; }
+    .hdr .left { display: flex; align-items: baseline; flex-wrap: wrap; }
+    .hdr .wait { font-size: 14px; font-weight: 700; background: #2a4a6e; padding: 6px 12px; border-radius: 6px; white-space: nowrap; }
+    .body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: #fff; border-radius: 12px; width: min(640px, 100%); padding: 28px 28px 24px; border: 1.5px solid #1e3a5c; box-shadow: 0 2px 8px rgba(30,58,92,.08); }
+    .card.ready { text-align: center; padding: 40px 24px 32px; }
+    .icon { font-size: 48px; line-height: 1; margin-bottom: 12px; letter-spacing: -2px; color: #1e3a5c; font-weight: 800; }
+    .title { font-size: clamp(26px, 5vw, 34px); font-weight: 800; color: #1e3a5c; margin-bottom: 8px; }
+    .sub { font-size: 18px; color: #5a6575; margin-bottom: 18px; }
+    .hint { font-size: 13px; color: #8a93a1; margin-top: 12px; }
+    .badge { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .04em; padding: 4px 10px; border-radius: 4px; color: #fff; background: #2f6b4a; margin-bottom: 12px; }
+    .badge.bad { background: #9a3a3a; }
+    .barcode-wrap { text-align: center; padding: 10px 8px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; margin: 8px 0 6px; }
+    .barcode-wrap svg { max-width: 100%; height: auto; }
+    .orderno { text-align: center; font-size: clamp(20px, 4vw, 26px); font-weight: 800; letter-spacing: .02em; margin-bottom: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+    .ship-to { text-align: center; font-size: clamp(16px, 3.2vw, 20px); font-weight: 700; color: #1f2530; margin-bottom: 10px; }
+    .ship-to b { color: #5a6575; font-weight: 600; margin-right: 6px; }
+    .scan-hint { text-align: center; font-size: 14px; font-weight: 700; color: #b8791a; background: #fcf1dc; border: 1px solid #e2c48a; border-radius: 6px; padding: 8px 10px; margin-bottom: 14px; }
+    .fields { font-size: 15px; line-height: 1.7; margin-bottom: 16px; text-align: left; }
+    .fields b { display: inline-block; min-width: 88px; color: #5a6575; font-weight: 600; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { flex: 1; min-width: 120px; text-align: center; padding: 14px 12px; border-radius: 8px; font-weight: 700; font-size: 15px; border: 1.5px solid #1e3a5c; background: #fff; color: #1e3a5c; cursor: pointer; }
+    .btn:disabled { opacity: .55; cursor: wait; }
+    .btn.primary { background: #1e3a5c; color: #fff; }
+    .btn.danger { border-color: #9a3a3a; color: #9a3a3a; }
+    .card.err { border-color: #9a3a3a; text-align: center; }
+    .err-title { font-size: clamp(24px, 5vw, 32px); font-weight: 800; color: #9a3a3a; margin: 8px 0 12px; }
+    .isbn-line { font-size: 16px; font-weight: 700; margin-bottom: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    .err-body { font-size: 15px; color: #5a6575; margin-bottom: 20px; line-height: 1.45; }
+    label.isbn-label { display: block; font-size: 12px; font-weight: 700; color: #5a6575; margin-bottom: 6px; text-align: left; }
+    #isbn-input {
+      width: 100%; font-size: 22px; padding: 14px 14px; border: 2px solid #1e3a5c; border-radius: 10px;
+      font-family: ui-monospace, Menlo, Consolas, monospace; text-align: center; letter-spacing: .04em;
+    }
+    #isbn-input:focus { outline: 3px solid #fcf1dc; border-color: #b8791a; }
+    .status-msg { min-height: 1.2em; font-size: 13px; color: #9a3a3a; margin-top: 10px; }
+    .hidden { display: none !important; }
+    .problem-box { margin-top: 12px; text-align: left; }
+    .problem-box input { width: 100%; padding: 10px 12px; border: 1.5px solid #9a3a3a; border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+
+    .btn.camera { margin-top: 14px; width: 100%; flex: none; }
+    #screen-camera { text-align: center; padding: 20px 20px 18px; }
+    #screen-camera .title { font-size: clamp(22px, 4.5vw, 28px); margin-bottom: 10px; }
+    #cam-video { width: 100%; max-height: 55vh; border-radius: 10px; background: #111; object-fit: cover; }
+    #cam-reader { width: 100%; min-height: 240px; border-radius: 10px; overflow: hidden; }
+    #cam-reader video { border-radius: 10px !important; }
+    .cam-status { font-size: 14px; color: #5a6575; margin: 10px 0 12px; min-height: 1.2em; }
+
+    .card.multi { width: min(980px, 100%); padding: 20px; }
+    .mhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .mhead .orderno { text-align: left; margin: 0; }
+    .mhead .ship-to { text-align: left; margin: 2px 0 0; }
+    .progress { font-size: clamp(20px, 4vw, 28px); font-weight: 800; color: #1e3a5c; white-space: nowrap; }
+    .progress.complete { color: #2f6b4a; }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 12px; max-height: 52vh; overflow-y: auto; }
+    .tile { border: 2px solid #c9ced6; background: #f3f4f6; color: #8a93a1; border-radius: 8px; padding: 8px 9px; font-size: 13px; line-height: 1.3; min-height: 74px; display: flex; flex-direction: column; justify-content: space-between; }
+    .tile .t { font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+    .tile .c { font-weight: 800; font-size: 13px; margin-top: 4px; }
+    .tile .i { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; }
+    .tile.partial { border-color: #b8791a; background: #fcf1dc; color: #6b4a10; }
+    .tile.ok { border-color: #2f6b4a; background: #2f6b4a; color: #fff; }
+    .tile.flash { outline: 3px solid #1e3a5c; }
+    .tile .confirm { margin-top: 6px; padding: 6px; border-radius: 6px; border: 1.5px solid #b8791a; background: #fff; color: #b8791a; font-weight: 800; cursor: pointer; font-size: 12px; }
+    .warn { display: none; background: #9a3a3a; color: #fff; font-weight: 800; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 18px; }
+    .warn.show { display: block; }
+    .test-tag { background: #b8791a; color: #fff; font-size: 12px; font-weight: 800; padding: 4px 8px; border-radius: 4px; margin-left: 10px; }
+    .scanrow { display: flex; gap: 8px; margin-bottom: 12px; }
+    .scanrow input { flex: 1; font-size: 18px; padding: 10px; border: 2px solid #1e3a5c; border-radius: 8px; font-family: ui-monospace, Menlo, Consolas, monospace; text-align: center; }
+    .scanrow .btn { flex: none; min-width: 0; padding: 10px 14px; }
+  </style>
+</head>
+<body>
+<div class="station">
+  <div class="hdr">
+    <div class="left"><span class="brand">FINDER FOR BKS4LESS</span><span class="test-tag">MULTI ORDERS · TEST</span></div>
+    <div class="wait" id="waiting-count">Multi waiting: …</div>
+  </div>
+  <div class="body">
+    <!-- READY -->
+    <div class="card ready" id="screen-ready">
+      <div class="icon">|||</div>
+      <div class="title">Multi orders</div>
+      <div class="sub">Scan any book from a multi-book order</div>
+      <label class="isbn-label" for="isbn-input">ISBN</label>
+      <input id="isbn-input" type="text" inputmode="numeric" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scan or type ISBN · Enter" autofocus>
+      <div class="status-msg" id="ready-msg"></div>
+      <button type="button" class="btn camera" id="btn-camera">Scan with camera</button>
+      <div class="hint">Multi list updates from Shopify every 5 min · test page</div>
+    </div>
+    <!-- CAMERA -->
+    <div class="card hidden" id="screen-camera">
+      <div class="title">Point at ISBN barcode</div>
+      <video id="cam-video" class="hidden" playsinline muted autoplay></video>
+      <div id="cam-reader" class="hidden"></div>
+      <div class="cam-status" id="cam-status">Starting camera…</div>
+      <div class="actions"><button type="button" class="btn" id="btn-cam-cancel">Cancel</button></div>
+    </div>
+    <!-- ORDER -->
+    <div class="card multi hidden" id="screen-order">
+      <div class="mhead">
+        <div>
+          <div class="badge">MULTI ORDER</div>
+          <div class="orderno" id="order-name"></div>
+          <div class="ship-to"><b>Ship to</b> <span id="customer-name">—</span></div>
+        </div>
+        <div class="progress" id="progress">0 of 0 books</div>
+      </div>
+      <div class="warn" id="warn"></div>
+      <div id="scan-area">
+        <div class="scanrow">
+          <input id="order-isbn" type="text" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="Scan next book · Enter">
+          <button type="button" class="btn" id="btn-camera2">Camera</button>
+        </div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div id="complete-area" class="hidden">
+        <div class="barcode-wrap"><svg id="order-barcode"></svg></div>
+        <div class="scan-hint">All books packed · scan this barcode with the Shipwise scanner</div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" id="btn-back">Back</button>
+        <button type="button" class="btn danger" id="btn-park">Park</button>
+        <button type="button" class="btn primary hidden" id="btn-done">Done · next order</button>
+      </div>
+      <div class="problem-box hidden" id="park-box">
+        <input id="park-note" type="text" maxlength="200" placeholder="Why park it? (missing book, damaged…)" autocomplete="off">
+        <div class="actions">
+          <button type="button" class="btn" id="btn-park-cancel">Cancel</button>
+          <button type="button" class="btn danger" id="btn-park-confirm">Park order</button>
+        </div>
+      </div>
+      <div class="status-msg" id="order-msg"></div>
+    </div>
+    <!-- NO MATCH -->
+    <div class="card err hidden" id="screen-no">
+      <div class="badge bad">NO MATCH</div>
+      <div class="err-title" id="no-title">No multi order — put back</div>
+      <div class="isbn-line" id="no-isbn"></div>
+      <div class="err-body" id="no-body">No waiting multi-book order needs this ISBN.</div>
+      <div class="actions"><button type="button" class="btn primary" id="btn-scan-another">Back · scan another</button></div>
+    </div>
+  </div>
+</div>
+<script>
+const CFG = window.FINDER_CONFIG || {};
+const API = (CFG.apiBase || '').replace(/\/$/, '');
+const STATION = localStorage.getItem('finder_station_id') || (() => { const s = 'st-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('finder_station_id', s); return s; })();
+let order = null, busy = false, camTarget = 'ready';
+const $ = (id) => document.getElementById(id);
+const norm = (r) => String(r || '').trim().toUpperCase().replace(/[^0-9X]/g, '');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function show(w) { ['ready', 'camera', 'order', 'no'].forEach((k) => $('screen-' + k).classList.toggle('hidden', k !== w)); if (w === 'ready') setTimeout(() => $('isbn-input').focus(), 50); if (w === 'order') setTimeout(() => $('order-isbn').focus(), 50); }
+async function api(fn, body) {
+  const r = await fetch(API + '/' + fn, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-finder-station-secret': CFG.stationSecret || '' }, body: JSON.stringify({ station_id: STATION, ...body }) });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new Error('Station not authorized');
+  if (r.status >= 500) throw new Error(d.error || ('HTTP ' + r.status));
+  return d;
+}
+async function refreshCount() { try { const d = await api('multi-match', { action: 'status' }); $('waiting-count').textContent = 'Multi waiting: ' + d.waiting_count + (d.parked_count ? ' · parked ' + d.parked_count : ''); } catch (_) {} }
+function warn(msg) { const w = $('warn'); w.textContent = msg; w.classList.toggle('show', !!msg); if (msg) { clearTimeout(warn.t); warn.t = setTimeout(() => w.classList.remove('show'), 6000); } }
+function render(o, flashId) {
+  order = o;
+  $('order-name').textContent = o.order_name;
+  $('customer-name').textContent = o.customer_name || '—';
+  const complete = o.lines.every((l) => l.scanned_qty >= l.qty);
+  $('progress').textContent = o.scanned_books + ' of ' + o.total_books + ' books';
+  $('progress').classList.toggle('complete', complete);
+  $('tiles').innerHTML = o.lines.map((l) => {
+    const cls = l.scanned_qty >= l.qty ? 'ok' : (l.scanned_qty > 0 ? 'partial' : '');
+    const cnt = l.qty > 1 ? '<div class="c">' + l.scanned_qty + ' of ' + l.qty + '</div>' : (l.scanned_qty >= l.qty ? '<div class="c">✓</div>' : '');
+    const conf = (!l.isbn && l.scanned_qty < l.qty) ? '<button class="confirm" data-line="' + l.id + '">No barcode · Tap to confirm</button>' : '';
+    return '<div class="tile ' + cls + (l.id === flashId ? ' flash' : '') + '"><div class="t">' + esc(l.title) + '</div><div class="i">' + esc(l.isbn || 'no ISBN') + '</div>' + cnt + conf + '</div>';
+  }).join('');
+  $('complete-area').classList.toggle('hidden', !complete);
+  $('scan-area').classList.toggle('hidden', complete);
+  $('btn-done').classList.toggle('hidden', !complete);
+  if (complete) { try { JsBarcode('#order-barcode', o.order_name, { format: 'CODE128', width: 2, height: 90, displayValue: false, margin: 8 }); } catch (e) { $('order-msg').textContent = 'Barcode error: ' + e.message; } }
+}
+async function onReadyScan() {
+  if (busy) return; const isbn = norm($('isbn-input').value); $('ready-msg').textContent = '';
+  if (isbn.length < 10) { $('ready-msg').textContent = 'Not a valid ISBN'; return; }
+  busy = true;
+  try {
+    const d = await api('multi-match', { isbn });
+    $('isbn-input').value = '';
+    if (d.found) { warn(''); $('order-msg').textContent = ''; show('order'); render(d.order, d.scanned_line_id); }
+    else { $('no-isbn').textContent = isbn; $('no-body').textContent = d.locked_elsewhere ? 'The order for this book is open on another station.' : 'No waiting multi-book order needs this ISBN. Put the book back.'; show('no'); }
+  } catch (e) { $('ready-msg').textContent = e.message; } finally { busy = false; refreshCount(); }
+}
+async function onOrderScan() {
+  if (busy || !order) return; const isbn = norm($('order-isbn').value); $('order-isbn').value = '';
+  if (isbn.length < 10) { warn('Not a valid ISBN'); return; }
+  busy = true;
+  try {
+    const d = await api('multi-scan', { order_id: order.id, isbn });
+    if (d.ok) { warn(''); render(d.order, d.scanned_line_id); }
+    else if (d.error === 'wrong_book') warn('WRONG BOOK — not in this order. Put it aside. (' + isbn + ')');
+    else if (d.error === 'already_complete') warn('Extra copy — this book is already fully packed for this order.');
+    else if (d.error === 'not_locked_by_station') { warn('This order is no longer open on this station. Go Back and rescan.'); }
+    else warn(d.error || 'Error');
+  } catch (e) { warn(e.message); } finally { busy = false; $('order-isbn').focus(); }
+}
+async function finish(fn, extra) {
+  if (busy || !order) return; busy = true; $('order-msg').textContent = '';
+  try { const d = await api(fn, { order_id: order.id, ...extra }); if (d.ok === false && d.error !== 'not_locked_by_station') { $('order-msg').textContent = d.error; return; } order = null; $('park-box').classList.add('hidden'); show('ready'); }
+  catch (e) { $('order-msg').textContent = e.message; } finally { busy = false; refreshCount(); }
+}
+$('tiles').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('.confirm'); if (!b || busy) return; busy = true;
+  try { const d = await api('multi-confirm', { order_id: order.id, line_id: Number(b.dataset.line) }); if (d.ok) render(d.order, Number(b.dataset.line)); else warn(d.error); } catch (e) { warn(e.message); } finally { busy = false; }
+});
+$('isbn-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onReadyScan(); } });
+$('order-isbn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); onOrderScan(); } });
+$('btn-back').onclick = () => finish('multi-release', {});
+$('btn-done').onclick = () => finish('multi-done', {});
+$('btn-park').onclick = () => { $('park-box').classList.remove('hidden'); $('park-note').focus(); };
+$('btn-park-cancel').onclick = () => $('park-box').classList.add('hidden');
+$('btn-park-confirm').onclick = () => finish('multi-park', { note: $('park-note').value.trim() });
+$('btn-scan-another').onclick = () => show('ready');
+$('btn-camera').onclick = () => openCamera('ready');
+$('btn-camera2').onclick = () => openCamera('order');
+$('btn-cam-cancel').onclick = async () => { await stopCamera(); show(camTarget); };
+// ---- camera (BarcodeDetector, html5-qrcode fallback) ----
+let camStream = null, camDetector = null, camRaf = 0, html5Qr = null, camBusy = false;
+async function stopCamera() {
+  if (camRaf) cancelAnimationFrame(camRaf); camRaf = 0; camDetector = null;
+  if (html5Qr) { const q = html5Qr; html5Qr = null; try { await q.stop(); } catch (_) {} try { await q.clear(); } catch (_) {} }
+  if (camStream) { try { camStream.getTracks().forEach((t) => t.stop()); } catch (_) {} camStream = null; }
+  const v = $('cam-video'); try { v.srcObject = null; } catch (_) {} v.classList.add('hidden');
+  $('cam-reader').classList.add('hidden'); $('cam-reader').innerHTML = '';
+}
+function loadHtml5Qrcode() { return new Promise((res, rej) => { if (window.Html5Qrcode) return res(); const s = document.createElement('script'); s.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js'; s.onload = res; s.onerror = () => rej(new Error('Could not load scanner library')); document.head.appendChild(s); }); }
+async function onDecoded(raw) {
+  if (camBusy) return; camBusy = true; await stopCamera(); show(camTarget);
+  try { if (camTarget === 'order') { $('order-isbn').value = raw; await onOrderScan(); } else { $('isbn-input').value = raw; await onReadyScan(); } } finally { camBusy = false; }
+}
+async function startDetector() {
+  camDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
+  camStream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+  const v = $('cam-video'); v.classList.remove('hidden'); v.srcObject = camStream; await v.play();
+  $('cam-status').textContent = 'Aim at the book barcode';
+  const tick = async () => { if (!camDetector || !camStream) return; try { if (v.readyState >= 2) { const c = await camDetector.detect(v); if (c && c.length && c[0].rawValue) { await onDecoded(c[0].rawValue); return; } } } catch (_) {} camRaf = requestAnimationFrame(tick); };
+  camRaf = requestAnimationFrame(tick);
+}
+async function startHtml5() {
+  await loadHtml5Qrcode(); const r = $('cam-reader'); r.classList.remove('hidden'); r.innerHTML = '';
+  const F = Html5QrcodeSupportedFormats;
+  html5Qr = new Html5Qrcode('cam-reader', { formatsToSupport: [F.EAN_13, F.EAN_8, F.UPC_A, F.UPC_E, F.CODE_128], verbose: false });
+  $('cam-status').textContent = 'Aim at the book barcode';
+  await html5Qr.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 280, height: 140 }, aspectRatio: 1.777 }, (d) => onDecoded(d), () => {});
+}
+async function openCamera(target) {
+  camTarget = target;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { (target === 'order' ? warn : (m) => $('ready-msg').textContent = m)('Camera not available. Use the ISBN field or USB scanner.'); return; }
+  show('camera'); $('cam-status').textContent = 'Starting camera…';
+  try {
+    if ('BarcodeDetector' in window) { try { await startDetector(); return; } catch (e) { await stopCamera(); if (e && e.name === 'NotAllowedError') throw e; } }
+    await startHtml5();
+  } catch (e) { await stopCamera(); show(target); const m = 'Camera unavailable: ' + ((e && (e.name === 'NotAllowedError' ? 'permission denied' : e.message)) || 'error'); if (target === 'order') warn(m); else $('ready-msg').textContent = m; }
+}
+refreshCount(); setInterval(refreshCount, 60000);
+</script>
+</body>
+</html>
